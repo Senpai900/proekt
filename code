@@ -1,0 +1,196 @@
+#include <iostream>
+#include <clocale>
+#include <windows.h>
+#include <time.h>
+using namespace std;
+
+char fd[] = { '-', '-', '-', '-', '-', '-', '-', '-', '-' };
+
+
+void SetColor(int text, int background) // цвет.
+{
+    
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, (WORD)((background << 4) | text));
+}
+
+void printspace(int s) {
+    
+    for (int i = 0; i < s; i++)
+        cout << ' ';
+}
+
+void printfield() {
+    
+    SetColor(14, 0);
+    printspace(34); cout << '-' << fd[0] << "-|-" << fd[1] << "-|-" << fd[2] << "-\n";
+    printspace(34); cout << '-' << fd[3] << "-|-" << fd[4] << "-|-" << fd[5] << "-\n";
+    printspace(34); cout << '-' << fd[6] << "-|-" << fd[7] << "-|-" << fd[8] << "-\n";
+}
+
+void clearfield() { // очистка.
+    
+    for (int i = 0; i < 9; i++)
+        fd[i] = char(i + 49);
+}
+
+void clearscreen(int s) {
+    for (int i = 0; i < s; i++)
+        cout << endl;
+}
+
+
+bool isWinner(char who) { // проверка на победу.
+    if (fd[0] == who && fd[1] == who && fd[2] == who) return true;
+    if (fd[3] == who && fd[4] == who && fd[5] == who) return true;
+    if (fd[6] == who && fd[7] == who && fd[8] == who) return true;
+    if (fd[0] == who && fd[3] == who && fd[6] == who) return true;
+    if (fd[1] == who && fd[4] == who && fd[7] == who) return true;
+    if (fd[2] == who && fd[5] == who && fd[8] == who) return true;
+    if (fd[0] == who && fd[4] == who && fd[8] == who) return true;
+    if (fd[2] == who && fd[4] == who && fd[6] == who) return true;
+    return false;
+}
+
+int botMove() { // ходы бота.
+    if (fd[4] == '5') return 5;
+    for (int i = 0; i < 9; i++)
+        if (fd[i] == char(i + 49)) {
+            fd[i] = 'O';
+            if (isWinner('O'))
+                return i + 1;
+            else
+                fd[i] = char(i + 49);
+
+            fd[i] = 'X';
+            if (isWinner('X'))
+                return i + 1;
+            else
+                fd[i] = char(i + 49);
+        }
+    for (int i = 0; i < 9; i++)
+        if (fd[i] == char(i + 49))
+            return i + 1;
+}
+
+void print() {
+    system("cls");
+    clearscreen(2);
+    clearscreen(2);
+    printfield();
+    clearscreen(1);
+}
+
+char play(int h) { // сама игра.
+    int turn = 1;
+    int move;
+    char a = 'X', b = 'O';
+    if (h == 0) swap(a, b);
+    while (1) {
+        if (turn % 2 == h) {
+            print();
+            SetColor(12, 0);
+            if (turn > 1) {
+                printspace(30);
+                cout << "Бот поставил " << b << " на " << move << endl;
+            }
+            printspace(34);
+            cout << "Ваш ход:  ";
+            cin >> move;
+            while (move > 9 || fd[move - 1] == 'X' || fd[move - 1] == 'O') {
+                print();
+                SetColor(12, 0);
+                printspace(15);
+                cout << "Введите коректное значение,пожалуйста (от 1 до 9)\n";
+                printspace(34);
+                cout << "Ваш ход:  ";
+                cin >> move;
+            }
+            fd[move - 1] = a;
+            if (isWinner(a)) {
+                print();
+                printspace(35);
+                for (int i = 0; i < 400000000; i++)
+                    if (i % 100000000 == 0) cout << '.';
+                SetColor(2, 0);
+                cout << "X победил!\n";
+                return a;
+            }
+        }
+        else {
+            print();
+            SetColor(12, 0);
+            if (turn > 1) {
+                printspace(30);
+                cout << "Вы поставили " << a << " на " << move << endl;
+            }
+            printspace(35); cout << "Бот думает";
+            for (int i = 0; i < 600000000; i++)
+                if (i % 100000000 == 0) cout << '.';
+            cout << endl;
+            move = botMove();
+            fd[move - 1] = b;
+            if (isWinner(b)) {
+                print();
+                printspace(33);
+                for (int i = 0; i < 400000000; i++)
+                    if (i % 100000000 == 0) cout << '.';
+                SetColor(2, 0);
+                cout << "0 победил!\n";
+                return b;
+            }
+        }
+        turn++;
+        if (turn == 10) {
+            print();
+            printspace(33);
+            for (int i = 0; i < 400000000; i++)
+                if (i % 100000000 == 0) cout << '.';
+            SetColor(2, 0);
+            cout << "Ничья!\n";
+            return 'D';
+        }
+    }
+}
+
+int main() {
+    setlocale(LC_ALL, "Russian");
+    string p;
+    cout << "Здравствуйте!" << endl;
+    cout << "Это игра крестики-нолики!" << endl;
+    cout << "Введите Ваше имя : " << endl;
+    cin >> p;
+    cout << p << " , " << "приятной игры!" << endl;
+    srand(time(0));
+    int p_wins, b_wins, draws;
+    p_wins = b_wins = draws = 0; // это статистика.
+    char choice = 'y';
+    int h = 0;
+    while (choice == 'y') {
+        clearfield();
+        char winner;
+        h = abs(h - 1);
+        winner = play(h);
+        if (winner == 'D') draws++;
+        if (winner == 'X') {
+            if (h == 1) p_wins++;
+            else b_wins++;
+        }
+        if (winner == 'O') {
+            if (h == 0) p_wins++;
+            else b_wins++;
+        }
+        SetColor(3, 0);
+        printspace(32);
+        cout << "Вы выиграли " << p_wins << " раз\n";
+        printspace(32);
+        cout << "Бот выиграл " << b_wins << " раз\n";
+        printspace(32);
+        cout << "Ничья была " << draws << " раз\n\n";
+        SetColor(7, 0);
+        printspace(32);
+        cout << "Еще? да/нет (y/n) :";
+        cin >> choice;
+    }
+    return 0;
+}
